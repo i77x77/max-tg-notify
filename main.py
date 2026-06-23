@@ -19,6 +19,7 @@ MAX_PHONE = os.getenv("MAX_PHONE")
 MAX_CHAT_ID = int(os.getenv("MAX_CHAT_ID", "0"))
 TG_TOKEN = os.getenv("TG_BOT_TOKEN")
 TG_CHAT_ID = int(os.getenv("TG_CHAT_ID", "0"))
+MODE = os.getenv("MODE", "forward").lower()  # forward | notify
 
 bot = Bot(token=TG_TOKEN)
 client = Client(phone=MAX_PHONE, work_dir="cache", session_name="session.db")
@@ -68,24 +69,27 @@ async def on_max_message(message: Message, c: Client) -> None:
 
     sender = await _sender_name(message.sender) if message.sender else "Неизвестный"
 
-    photos = [a for a in message.attaches if isinstance(a, PhotoAttachment)]
-    videos = [a for a in message.attaches if isinstance(a, VideoAttachment)]
-    files = [a for a in message.attaches if isinstance(a, FileAttachment)]
-
-    if message.text:
-        content = message.text
-    elif photos:
-        content = "[фото]"
-    elif videos:
-        name = getattr(videos[0], "file_name", None) or "видео"
-        content = f"[{name}]"
-    elif files:
-        name = getattr(files[0], "file_name", None) or "файл"
-        content = f"[{name}]"
+    if MODE == "notify":
+        text = f"📨 Новое сообщение в MAX от <b>{sender}</b>"
     else:
-        return
+        photos = [a for a in message.attaches if isinstance(a, PhotoAttachment)]
+        videos = [a for a in message.attaches if isinstance(a, VideoAttachment)]
+        files = [a for a in message.attaches if isinstance(a, FileAttachment)]
 
-    text = f"📨 <b>{sender}</b>: {content}"
+        if message.text:
+            content = message.text
+        elif photos:
+            content = "[фото]"
+        elif videos:
+            name = getattr(videos[0], "file_name", None) or "видео"
+            content = f"[{name}]"
+        elif files:
+            name = getattr(files[0], "file_name", None) or "файл"
+            content = f"[{name}]"
+        else:
+            return
+
+        text = f"📨 <b>{sender}</b>: {content}"
 
     try:
         await bot.send_message(TG_CHAT_ID, text, parse_mode="HTML")
