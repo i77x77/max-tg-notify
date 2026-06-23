@@ -68,6 +68,7 @@ async def on_max_message(message: Message, c: Client) -> None:
         return
 
     sender = await _sender_name(message.sender) if message.sender else "Неизвестный"
+    content = ""
 
     if MODE == "notify":
         text = f"📨 Новое сообщение в MAX от <b>{sender}</b>"
