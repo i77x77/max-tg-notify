@@ -1,6 +1,8 @@
 import asyncio
+import json
 import logging
 import os
+import re
 
 from aiogram import Bot
 from dotenv import load_dotenv
@@ -23,6 +25,23 @@ MODE = os.getenv("MODE", "forward").lower()  # forward | notify
 
 bot = Bot(token=TG_TOKEN)
 client = Client(phone=MAX_PHONE, work_dir="cache", session_name="session.db")
+
+_NAMES_FILE = os.path.join(os.path.dirname(__file__), "names.json")
+try:
+    with open(_NAMES_FILE, encoding="utf-8") as _f:
+        _NAME_MAP: dict[str, str] = {k.lower(): v for k, v in json.load(_f).items()}
+except FileNotFoundError:
+    _NAME_MAP = {}
+
+
+def _replace_names(text: str) -> str:
+    if not _NAME_MAP:
+        return text
+    pattern = re.compile(
+        r"\b(" + "|".join(re.escape(k) for k in _NAME_MAP) + r")\b",
+        re.IGNORECASE,
+    )
+    return pattern.sub(lambda m: _NAME_MAP[m.group(0).lower()], text)
 
 
 def _user_display_name(user) -> str | None:
@@ -78,7 +97,7 @@ async def on_max_message(message: Message, c: Client) -> None:
         files = [a for a in message.attaches if isinstance(a, FileAttachment)]
 
         if message.text:
-            content = message.text
+            content = _replace_names(message.text)
         elif photos:
             content = "[фото]"
         elif videos:
