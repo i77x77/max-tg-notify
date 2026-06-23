@@ -1,3 +1,3 @@
 aiogram>=3.0
 python-dotenv
-pymax @ git+https://github.com/MaxApiTeam/PyMax.git
+git+https://github.com/MaxApiTeam/PyMax.git
